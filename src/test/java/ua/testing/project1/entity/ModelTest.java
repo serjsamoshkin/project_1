@@ -1,10 +1,11 @@
-package ua.testing.project1.model.entity;
+package ua.testing.project1.entity;
 
 import org.junit.Assert;
 import org.junit.Test;
-import ua.testing.project1.model.tourTypes.TourType;
-import ua.testing.project1.model.voucherTypes.MealType;
-import ua.testing.project1.model.voucherTypes.TransportType;
+import ua.testing.project1.entity.voucher.Voucher;
+import ua.testing.project1.model.tour.Tour;
+import ua.testing.project1.entity.voucher.voucherTypes.MealType;
+import ua.testing.project1.entity.voucher.voucherTypes.TransportType;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -20,12 +21,12 @@ public class ModelTest {
         LocalDate currentDate = LocalDate.now();
 
         // Hash and equals test
-        Tour tour1 = new Tour("test", TourType.values()[0], currentDate);
-        Tour tour2 = new Tour("test", TourType.values()[0], currentDate);
-        Tour tour3 = new Tour("test", TourType.values()[0], currentDate);
+        Tour tour1 = new Tour("test", Tour.TourType.values()[0], currentDate);
+        Tour tour2 = new Tour("test", Tour.TourType.values()[0], currentDate);
+        Tour tour3 = new Tour("test", Tour.TourType.values()[0], currentDate);
 
-        Tour tour4 = new Tour("test1", TourType.values()[0], currentDate);
-        Tour tour5 = new Tour("test", TourType.values()[0],
+        Tour tour4 = new Tour("test1", Tour.TourType.values()[0], currentDate);
+        Tour tour5 = new Tour("test", Tour.TourType.values()[0],
                 LocalDate.of(1, 1, 1));
 
         Assert.assertTrue("Tour equals error", tour1.equals(tour2));
@@ -69,7 +70,7 @@ public class ModelTest {
 
         List<Callable<Object>> todo = new ArrayList<>(5);
 
-        int loopVal = 100000;
+        int loopVal = 1000000;
 
         todo.add(Executors.callable(new TourIncrementation(loopVal)));
         todo.add(Executors.callable(new TourIncrementation(loopVal)));
@@ -88,7 +89,7 @@ public class ModelTest {
 
         Assert.assertTrue("There are errors in mechanism of generating 'id' value of Tour: several Tour obj with the same 'id'!", res == 0);
 
-        Tour tour6 = new Tour("test", TourType.values()[0], currentDate);
+        Tour tour6 = new Tour("test", Tour.TourType.values()[0], currentDate);
         Assert.assertTrue("Errors in TourIncrementation mechanism",
                 tour5.getId() + loopVal * todo.size() + 1 == tour6.getId());
 
@@ -115,25 +116,24 @@ public class ModelTest {
 
         int loopVal;
 
-        public TourIncrementation(int loopVal) {
+        TourIncrementation(int loopVal) {
             this.loopVal = loopVal;
         }
 
         @Override
         public void run() {
 
-            for (int i = 0; i < 100000; i++) {
-                Tour tour = new Tour("test", TourType.values()[0],
+            for (int i = 0; i < loopVal; i++) {
+                Tour tour = new Tour("test", Tour.TourType.values()[0],
                         LocalDate.of(1, 1, 1));
 
-                long id = tour.getId();
+                tourIncrVals.merge(tour.getId(), 1, this::sum);
 
-                if (!tourIncrVals.containsKey(id)) {
-                    tourIncrVals.put(id, 1);
-                } else {
-                    tourIncrVals.put(id, tourIncrVals.get(tour.getId()) + 1);
-                }
             }
+        }
+
+        private int sum(int l, int r){
+            return l + r;
         }
     }
 }

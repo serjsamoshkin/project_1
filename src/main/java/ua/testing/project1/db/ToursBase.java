@@ -1,6 +1,6 @@
 package ua.testing.project1.db;
 
-import ua.testing.project1.model.entity.Tour;
+import ua.testing.project1.model.tour.Tour;
 
 import java.util.Collections;
 import java.util.HashSet;

@@ -1,10 +1,15 @@
-package ua.testing.project1.model.entity;
+package ua.testing.project1.entity.voucher;
 
-import ua.testing.project1.model.tourTypes.TourType;
-import ua.testing.project1.model.voucherTypes.MealType;
-import ua.testing.project1.model.voucherTypes.TransportType;
+
+
+import ua.testing.project1.model.tour.Tour;
+import ua.testing.project1.model.tour.TourType;
+import ua.testing.project1.entity.voucher.consts.Meal;
+import ua.testing.project1.entity.voucher.consts.Transport;
+
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -15,11 +20,11 @@ public class Voucher {
 
     private final Tour tour;
 
-    private final MealType mealType;
-    private final TransportType transportType;
+    private final Meal mealType;
+    private final Transport transportType;
     private final int duration;
 
-    public Voucher(Tour tour, MealType mealType, TransportType transportType, int duration) {
+    public Voucher(Tour tour, Meal mealType, Transport transportType, int duration) {
         this.tour = tour;
         this.mealType = mealType;
         this.transportType = transportType;
@@ -30,11 +35,11 @@ public class Voucher {
         return tour;
     }
 
-    public MealType getMealType() {
+    public Meal getMealType() {
         return mealType;
     }
 
-    public TransportType getTransportType() {
+    public Transport getTransportType() {
         return transportType;
     }
 
@@ -42,8 +47,8 @@ public class Voucher {
         return duration;
     }
 
-    public String getPlace() {
-        return tour.getPlace();
+    public List<String> getPlace() {
+        return tour.getPlaces();
     }
 
     public TourType getType() {

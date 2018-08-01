@@ -1,13 +1,15 @@
-package ua.testing.project1.model.voucherTypes;
+package ua.testing.project1.entity.voucher.consts;
+
+import ua.testing.project1.entity.voucher.Voucher;
 
 /**
- * Contains TransportType constants of {@code Voucher} entity.
+ * Contains Transport constants of {@code Voucher} entity.
  * Used as keys in properties bundle. After adding new constants, you must add keys to the properties.
  * Used to send to JSP pages as attributes list/set.
  *
- * @see ua.testing.project1.model.entity.Voucher
+ * @see Voucher
  */
-public enum TransportType {
+public enum Transport {
     AIR,
     TRAIN,
     BUSS,

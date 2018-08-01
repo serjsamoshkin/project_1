@@ -1,45 +1,39 @@
-package ua.testing.project1.model.comparator.tour;
+package ua.testing.project1.service.comparators;
 
-import ua.testing.project1.model.entity.Tour;
-import ua.testing.project1.model.tourTypes.TourType;
+import ua.testing.project1.controller.TourController;
+import ua.testing.project1.model.tour.Tour;
+import ua.testing.project1.model.tour.TourType;
 
 import java.time.LocalDate;
 import java.util.Comparator;
 
 /**
- * Static class. Contains {@code Comparators} for {@code Tour} objects.
+ * Static class. Contains {@code TourComparator} for {@code Tour} objects.
  */
-public class Comparators {
+public class TourComparator {
 
-    public static Comparator<Tour> getPlaceComparator(){
-        class Comp implements Comparator<Tour> {
-            @Override
-            public int compare(Tour o1, Tour o2) {
-                String place1 = o1.getPlace();
-                String place2 = o2.getPlace();
-
-                return place1.compareTo(place2);
-            }
-
-            @Override
-            public Comparator<Tour> reversed() {
-                class CompRev implements Comparator<Tour> {
-                    @Override
-                    public int compare(Tour o1, Tour o2) {
-                        String place1 = o1.getPlace();
-                        String place2 = o2.getPlace();
-
-                        return place2.compareTo(place1);
-                    }
-
-                }
-                return new CompRev();
-            }
+    public static Comparator<Tour> getComparator(TourController.Sort op){
+        Comparator<Tour> comp;
+        switch (op) {
+            case DATE:
+                comp = TourComparator.getDateComparator();
+                break;
+            case TYPE:
+                comp = TourComparator.getTypeComparator();
+                break;
+//            case PLACE:
+//                comp = TourComparator.getPlaceComparator();
+//                break;
+            default:
+                // TODO сюда попадать не должны, залогировать.
+                comp = TourComparator.getDateComparator();
+                break;
         }
-        return new Comp();
+        return comp;
     }
 
-    public static Comparator<Tour> getDateComparator(){
+
+    private static Comparator<Tour> getDateComparator() {
         class Comp implements Comparator<Tour> {
             @Override
             public int compare(Tour o1, Tour o2) {
@@ -59,14 +53,14 @@ public class Comparators {
 
                         return date2.compareTo(date1);
                     }
-                                    }
+                }
                 return new CompRev();
             }
         }
         return new Comp();
     }
 
-    public static Comparator<Tour> getTypeComparator(){
+    private static Comparator<Tour> getTypeComparator() {
         class Comp implements Comparator<Tour> {
             @Override
             public int compare(Tour o1, Tour o2) {

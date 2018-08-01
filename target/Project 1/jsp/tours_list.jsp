@@ -23,7 +23,7 @@
                 </c:forEach>
             </fieldset>
             <div class="form-group">
-                <button type="submit" class="btn btn-primary" id="filter_submit"><fmt:message key="do-filtration"/></button>
+                <button type="submit" class="btn btn-primary" id="filter_submit">Фильтровать</button>
             </div>
         </form>
     </div>

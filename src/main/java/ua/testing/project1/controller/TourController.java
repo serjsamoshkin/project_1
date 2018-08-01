@@ -4,17 +4,15 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import ua.testing.project1.db.ToursBase;
-import ua.testing.project1.model.comparator.tour.Comparators;
-import ua.testing.project1.model.entity.Tour;
-import ua.testing.project1.model.entity.Voucher;
-import ua.testing.project1.model.tourTypes.TourType;
-import ua.testing.project1.model.voucherTypes.MealType;
-import ua.testing.project1.model.voucherTypes.TransportType;
+import ua.testing.project1.model.comparators.TourComparator;
+import ua.testing.project1.entity.voucher.Voucher;
+import ua.testing.project1.model.tour.Tour;
+import ua.testing.project1.entity.voucher.voucherTypes.MealType;
+import ua.testing.project1.entity.voucher.voucherTypes.TransportType;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -35,7 +33,7 @@ public class TourController {
      *  - sort_opt - Contains sorting option. It is the string representation of inner Sort Enum.
      *      With this operation is processed json_filter parameter.
      *      It can be stored in the type_opt operation handler or empty.
-     *      impl: Sort Tours list with {@link Comparators}. Restore TourType selection from json_filter.
+     *      impl: Sort Tours list with {@link TourComparator}. Restore TourType selection from json_filter.
      *
      * @param request
      * @param response
@@ -48,8 +46,8 @@ public class TourController {
         Sort sort = Sort.values()[0];
 
 
-        Map<TourType, Boolean> typeMap = new TreeMap<>();
-        for (TourType type : TourType.values()) {
+        Map<Tour.TourType, Boolean> typeMap = new TreeMap<>();
+        for (Tour.TourType type : Tour.TourType.values()) {
             typeMap.put(type, false);
         }
 
@@ -72,8 +70,8 @@ public class TourController {
             }
             String json_filter= request.getParameter("json_filter");
             if (json_filter != null && !json_filter.isEmpty()) {
-                Map<TourType, Object> retMap = new Gson().fromJson(request.getParameter("json_filter"),
-                        new TypeToken<HashMap<TourType, Boolean>>() {}.getType()
+                Map<Tour.TourType, Object> retMap = new Gson().fromJson(request.getParameter("json_filter"),
+                        new TypeToken<HashMap<Tour.TourType, Boolean>>() {}.getType()
                 );
                 if (retMap.containsKey(null)){
                     request.setAttribute("json_filter", null);
@@ -87,7 +85,7 @@ public class TourController {
             if (type_opt != null) {
                 for (String aType_opt : type_opt) {
                     try {
-                        typeMap.put(TourType.valueOf(aType_opt), true);
+                        typeMap.put(Tour.TourType.valueOf(aType_opt), true);
                     }catch (IllegalArgumentException e){
                         // TODO залогировать
                         // Вероятно играется пользователь
@@ -98,7 +96,7 @@ public class TourController {
             }
         }
 
-        HashMap<TourType, Boolean> innerTypeMap = new HashMap<>(typeMap);
+        HashMap<Tour.TourType, Boolean> innerTypeMap = new HashMap<>(typeMap);
         innerTypeMap.values().removeAll(Collections.singleton(false));
 
         if (!innerTypeMap.isEmpty()) {
@@ -117,17 +115,17 @@ public class TourController {
 
         switch (sort) {
             case DATE:
-                comp = Comparators.getDateComparator();
+                comp = TourComparator.getDateComparator();
                 break;
             case TYPE:
-                comp = Comparators.getTypeComparator();
+                comp = TourComparator.getTypeComparator();
                 break;
             case PLACE:
-                comp = Comparators.getPlaceComparator();
+                comp = TourComparator.getPlaceComparator();
                 break;
             default:
                 // TODO сюда попадать не должны, залогировать.
-                comp = Comparators.getDateComparator();
+                comp = TourComparator.getDateComparator();
                 break;
         }
 
@@ -145,7 +143,7 @@ public class TourController {
 
     /**
      * Displays page with Tour bean to add users extra options to create {@code Voucher}: to byu voucher or to reserved it.
-     * Sets the Voucher's MealType and TransportType enum constants to page as attributes for
+     * Sets the Voucher's Meal and Transport enum constants to page as attributes for
      * creating <select></select> tags on page.
      *
      * @param request
