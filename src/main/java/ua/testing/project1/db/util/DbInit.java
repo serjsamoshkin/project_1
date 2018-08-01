@@ -2,6 +2,7 @@ package ua.testing.project1.db.util;
 
 import ua.testing.project1.db.ToursBase;
 import ua.testing.project1.model.tour.Tour;
+import ua.testing.project1.model.tour.TourType;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -25,9 +26,11 @@ public class DbInit {
              places) {
             for (LocalDate date:
                  dates) {
-                for (Tour.TourType type:
-                        Tour.TourType.values()) {
-                    ToursBase.add(new Tour(place, type, date));
+                for (TourType type:
+                        TourType.values()) {
+                    Tour tour = Tour.tourOf(type, date);
+                    tour.addPlace(place);
+                    ToursBase.add(tour);
                 }
             }
         }

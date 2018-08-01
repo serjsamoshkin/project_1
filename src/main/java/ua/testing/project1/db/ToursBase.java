@@ -4,6 +4,7 @@ import ua.testing.project1.model.tour.Tour;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -26,11 +27,11 @@ public class ToursBase {
 
     }
 
-    public static Tour getById(Long id){
+    public static Optional<Tour> getById(Long id){
         for (Tour tour :
                 base) {
             if (tour.getId() == id){
-                return tour;
+                return Optional.of(tour);
             }
         }
         return Tour.TOUR_NOT_FOUND;

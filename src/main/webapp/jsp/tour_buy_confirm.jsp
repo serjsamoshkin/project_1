@@ -9,7 +9,7 @@
     <br>
     <div class="col-lg-5 col-md-5 col-xs-5" >
         <h1><fmt:message key="tour"/>:</h1>
-        <h3><fmt:message key="place"/>: ${voucher.tour.place}</h3>
+        <h3><fmt:message key="place"/>: ${voucher.tour.placeRepresentation}</h3>
         <h3><fmt:message key="tour-type"/>: <fmt:message key="${voucher.tour.type}"/></h3>
         <h3><fmt:message key="date"/>: ${voucher.tour.date}</h3>
 

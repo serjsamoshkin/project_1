@@ -1,4 +1,4 @@
-package ua.testing.project1.entity.voucher.consts;
+package ua.testing.project1.model.voucher;
 
 import ua.testing.project1.entity.voucher.Voucher;
 

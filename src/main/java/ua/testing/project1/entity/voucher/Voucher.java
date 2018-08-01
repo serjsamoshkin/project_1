@@ -4,8 +4,8 @@ package ua.testing.project1.entity.voucher;
 
 import ua.testing.project1.model.tour.Tour;
 import ua.testing.project1.model.tour.TourType;
-import ua.testing.project1.entity.voucher.consts.Meal;
-import ua.testing.project1.entity.voucher.consts.Transport;
+import ua.testing.project1.model.voucher.Meal;
+import ua.testing.project1.model.voucher.Transport;
 
 
 import java.time.LocalDate;

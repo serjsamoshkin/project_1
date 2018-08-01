@@ -4,11 +4,12 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import ua.testing.project1.db.ToursBase;
-import ua.testing.project1.model.comparators.TourComparator;
 import ua.testing.project1.entity.voucher.Voucher;
 import ua.testing.project1.model.tour.Tour;
-import ua.testing.project1.entity.voucher.voucherTypes.MealType;
-import ua.testing.project1.entity.voucher.voucherTypes.TransportType;
+import ua.testing.project1.model.tour.TourType;
+import ua.testing.project1.model.voucher.Meal;
+import ua.testing.project1.model.voucher.Transport;
+import ua.testing.project1.service.comparators.TourComparator;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -46,8 +47,8 @@ public class TourController {
         Sort sort = Sort.values()[0];
 
 
-        Map<Tour.TourType, Boolean> typeMap = new TreeMap<>();
-        for (Tour.TourType type : Tour.TourType.values()) {
+        Map<TourType, Boolean> typeMap = new TreeMap<>();
+        for (TourType type : TourType.values()) {
             typeMap.put(type, false);
         }
 
@@ -70,8 +71,8 @@ public class TourController {
             }
             String json_filter= request.getParameter("json_filter");
             if (json_filter != null && !json_filter.isEmpty()) {
-                Map<Tour.TourType, Object> retMap = new Gson().fromJson(request.getParameter("json_filter"),
-                        new TypeToken<HashMap<Tour.TourType, Boolean>>() {}.getType()
+                Map<TourType, Object> retMap = new Gson().fromJson(request.getParameter("json_filter"),
+                        new TypeToken<HashMap<TourType, Boolean>>() {}.getType()
                 );
                 if (retMap.containsKey(null)){
                     request.setAttribute("json_filter", null);
@@ -85,7 +86,7 @@ public class TourController {
             if (type_opt != null) {
                 for (String aType_opt : type_opt) {
                     try {
-                        typeMap.put(Tour.TourType.valueOf(aType_opt), true);
+                        typeMap.put(TourType.valueOf(aType_opt), true);
                     }catch (IllegalArgumentException e){
                         // TODO залогировать
                         // Вероятно играется пользователь
@@ -96,7 +97,7 @@ public class TourController {
             }
         }
 
-        HashMap<Tour.TourType, Boolean> innerTypeMap = new HashMap<>(typeMap);
+        HashMap<TourType, Boolean> innerTypeMap = new HashMap<>(typeMap);
         innerTypeMap.values().removeAll(Collections.singleton(false));
 
         if (!innerTypeMap.isEmpty()) {
@@ -111,24 +112,7 @@ public class TourController {
 
         List<Tour> tourList = new ArrayList<>(tours);
 
-        Comparator<Tour> comp;
-
-        switch (sort) {
-            case DATE:
-                comp = TourComparator.getDateComparator();
-                break;
-            case TYPE:
-                comp = TourComparator.getTypeComparator();
-                break;
-            case PLACE:
-                comp = TourComparator.getPlaceComparator();
-                break;
-            default:
-                // TODO сюда попадать не должны, залогировать.
-                comp = TourComparator.getDateComparator();
-                break;
-        }
-
+        Comparator<Tour> comp = TourComparator.getComparator(sort);
         tourList.sort(comp);
 
         request.setAttribute("type_map", typeMap);
@@ -155,12 +139,17 @@ public class TourController {
         String strId = request.getParameter("id");
         long id = Long.valueOf(strId);
 
-        Set<MealType> mealSet = new HashSet<>(Arrays.asList(MealType.values()));
-        Set<TransportType> transportSet = new HashSet<>(Arrays.asList(TransportType.values()));
+        Set<Meal> mealSet = new HashSet<>(Arrays.asList(Meal.values()));
+        Set<Transport> transportSet = new HashSet<>(Arrays.asList(Transport.values()));
 
-        Tour tour = ToursBase.getById(id);
+        Optional<Tour> tour = ToursBase.getById(id);
+        if (!tour.isPresent()){
+            // TODO залогировать
+            request.getServletContext().getRequestDispatcher("/").forward(request, response);
+            return;
+        }
 
-        request.setAttribute("tour", tour);
+        request.setAttribute("tour", tour.get());
         request.setAttribute("meal_set", mealSet);
         request.setAttribute("transport_set", transportSet);
 
@@ -182,16 +171,18 @@ public class TourController {
         String strId = request.getParameter("id");
         String meal_opt = request.getParameter("meal_opt");
         String transport_opt = request.getParameter("transport_opt");
+        String durationStr = request.getParameter("duration");
+        int duration = Integer.valueOf(durationStr);
 
-        MealType meal;
-        TransportType transport;
+        Meal meal;
+        Transport transport;
 
         if (meal_opt == null){
             // TODO залогировать
             request.getServletContext().getRequestDispatcher("/").forward(request, response);
             return;
         }else {
-            meal = MealType.valueOf(meal_opt);
+            meal = Meal.valueOf(meal_opt);
         }
 
         if (transport_opt == null){
@@ -199,18 +190,18 @@ public class TourController {
             request.getServletContext().getRequestDispatcher("/").forward(request, response);
             return;
         }else {
-            transport = TransportType.valueOf(transport_opt);
+            transport = Transport.valueOf(transport_opt);
         }
 
         long id = Long.valueOf(strId);
-        Tour tour = ToursBase.getById(id);
-        if (tour == Tour.TOUR_NOT_FOUND){
+        Optional<Tour> tour = ToursBase.getById(id);
+        if (!tour.isPresent()){
             // TODO залогировать
             request.getServletContext().getRequestDispatcher("/").forward(request, response);
             return;
         }
 
-        Voucher voucher = new Voucher(tour, meal, transport, 10);
+        Voucher voucher = new Voucher(tour.get(), meal, transport, duration);
 
         request.setAttribute("voucher", voucher);
 
@@ -221,7 +212,7 @@ public class TourController {
     /**
      * Inner Enum is stored sorting parameters for displaying to users and process their choice.
      */
-    enum Sort {
+    public enum Sort {
         DATE,
         PLACE,
         TYPE,;

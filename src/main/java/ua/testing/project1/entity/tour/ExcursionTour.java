@@ -1,21 +1,21 @@
 package ua.testing.project1.entity.tour;
 
 import ua.testing.project1.model.tour.TourType;
-import ua.testing.project1.model.tour.ExcursionTour;
+import ua.testing.project1.model.tour.AbstractExcursionTour;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ExcurtionTour extends ExcursionTour {
+public class ExcursionTour extends AbstractExcursionTour {
 
     private List<String> exhibitions;
     {
         exhibitions = new ArrayList<>();
     }
 
-    public ExcurtionTour(String place, TourType type, LocalDate date) {
-        super(place, type, date);
+    public ExcursionTour(LocalDate date) {
+        super(TourType.EXCURSION, date);
     }
 
     public void addExhibition(String exhibition){

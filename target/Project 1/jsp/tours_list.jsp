@@ -23,7 +23,7 @@
                 </c:forEach>
             </fieldset>
             <div class="form-group">
-                <button type="submit" class="btn btn-primary" id="filter_submit">Фильтровать</button>
+                <button type="submit" class="btn btn-primary" id="filter_submit"><fmt:message key="do-filtration"/></button>
             </div>
         </form>
     </div>
@@ -61,7 +61,7 @@
             </tr>
             <c:forEach items="${tours_list}" var="tour">
                 <tr>
-                    <td><c:out value="${tour.place}"/></td>
+                    <td><c:out value="${tour.placeRepresentation}"/></td>
                     <td><fmt:message key="${tour.type}"/></td>
                     <td><c:out value="${tour.date}"/></td>
                     <td><a href="/tour_open?id=${tour.id}"><fmt:message key="buy"/></a></td>
