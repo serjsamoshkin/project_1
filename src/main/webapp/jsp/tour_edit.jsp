@@ -54,7 +54,7 @@
 
         function validateDuration() {
             duration.setCustomValidity('');
-            var strongRegex = new RegExp("^[^-]?[1-9][0-9]{0,2}$");
+            var strongRegex = new RegExp("^[1-9][0-9]{0,2}$");
             if (!strongRegex.test(duration.value)) {
                 duration.setCustomValidity('<fmt:message key="duration-incorrect"/>');
             }

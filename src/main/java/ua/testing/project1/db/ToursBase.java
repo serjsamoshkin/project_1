@@ -23,7 +23,7 @@ public class ToursBase {
 
     public static Set<Tour> getTours(){
 
-        return Collections.unmodifiableSet(base);
+        return new HashSet<>(base);
 
     }
 

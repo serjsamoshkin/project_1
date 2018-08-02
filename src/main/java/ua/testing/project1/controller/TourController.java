@@ -1,8 +1,5 @@
 package ua.testing.project1.controller;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import ua.testing.project1.db.ToursBase;
 import ua.testing.project1.entity.voucher.Voucher;
 import ua.testing.project1.model.tour.Tour;
@@ -16,7 +13,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Class handles MainServlet HTTP calls with urls "/tour", "/tour_open", "/tour_buy".
@@ -27,14 +23,14 @@ public class TourController {
     /**
      * Displays the list of active tours (Tours in database emulation).
      * Handles service operation that was selected by user on the page:
-     *  - type_opt - Contains TourType string representation.
-     *      Saves users choice to Map, serializes it to json and store in json_filter parameter.
-     *      impl: filters the list of Tours with selected users TourTypes
-     *
-     *  - sort_opt - Contains sorting option. It is the string representation of inner Sort Enum.
-     *      With this operation is processed json_filter parameter.
-     *      It can be stored in the type_opt operation handler or empty.
-     *      impl: Sort Tours list with {@link TourComparator}. Restore TourType selection from json_filter.
+     * - type_opt - Contains TourType string representation.
+     * Saves users choice to Map, serializes it to json and store in json_filter parameter.
+     * impl: filters the list of Tours with selected users TourTypes
+     * <p>
+     * - sort_opt - Contains sorting option. It is the string representation of inner Sort Enum.
+     * With this operation is processed json_filter parameter.
+     * It can be stored in the type_opt operation handler or empty.
+     * impl: Sort Tours list with {@link TourComparator}. Restore TourType selection from json_filter.
      *
      * @param request
      * @param response
@@ -44,81 +40,40 @@ public class TourController {
     public void showTorsList(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
         Set<Tour> tours = ToursBase.getTours();
-        Sort sort = Sort.values()[0];
 
+        Map<TourType, Boolean> typeMap = fillMap(new TreeMap<>(), TourType.values(), false);
+        if (request.getParameterMap().containsKey("type_opt")) {
+            List<String> type_opt = Arrays.asList(request.getParameterValues("type_opt"));
+            if (!TourType.containAll(type_opt)) {
+                response.sendRedirect("/");
+                return;
+            }
 
-        Map<TourType, Boolean> typeMap = new TreeMap<>();
-        for (TourType type : TourType.values()) {
-            typeMap.put(type, false);
+            type_opt.forEach(t -> {
+                tours.removeIf(tour -> tour.getType().equals(TourType.valueOf(t)));
+                typeMap.put(TourType.valueOf(t), true);
+            });
         }
 
-        Map<Sort, Boolean> sortMap = new HashMap<>();
-        for (Sort s : Sort.values()) {
-            sortMap.put(s, false);
-        }
-
+        Sort sortConst = Sort.values()[0]; // def val
+        List<Tour> tourList = new ArrayList<>(tours);
         if (request.getParameterMap().containsKey("sort_opt")) {
             String sort_opt = request.getParameter("sort_opt");
-            if (!sort_opt.isEmpty()) {
-                try {
-                    sort = Sort.valueOf(sort_opt);
-                    sortMap.put(sort, true);
-                }catch (IllegalArgumentException e){
-                    // TODO залогировать
-                    // Вероятно играется пользователь
-                    request.getServletContext().getRequestDispatcher("/").forward(request, response);
-                }
-            }
-            String json_filter= request.getParameter("json_filter");
-            if (json_filter != null && !json_filter.isEmpty()) {
-                Map<TourType, Object> retMap = new Gson().fromJson(request.getParameter("json_filter"),
-                        new TypeToken<HashMap<TourType, Boolean>>() {}.getType()
-                );
-                if (retMap.containsKey(null)){
-                    request.setAttribute("json_filter", null);
-                }else {
-                    retMap.keySet().forEach(v -> typeMap.put(v, true));
-                }
+            if (!Sort.hasValue(sort_opt)) {
+                response.sendRedirect("/");
+                return;
             }
 
-        } else if (request.getParameterMap().containsKey("type_opt")) {
-            String[] type_opt = request.getParameterMap().get("type_opt");
-            if (type_opt != null) {
-                for (String aType_opt : type_opt) {
-                    try {
-                        typeMap.put(TourType.valueOf(aType_opt), true);
-                    }catch (IllegalArgumentException e){
-                        // TODO залогировать
-                        // Вероятно играется пользователь
-                        request.setAttribute("type_opt", null);
-                        typeMap.replaceAll((k, v) -> false);
-                    }
-                }
-            }
+            sortConst = Sort.valueOf(sort_opt);
+            Comparator<Tour> comp = TourComparator.getComparator(sortConst);
+            tourList.sort(comp);
         }
-
-        HashMap<TourType, Boolean> innerTypeMap = new HashMap<>(typeMap);
-        innerTypeMap.values().removeAll(Collections.singleton(false));
-
-        if (!innerTypeMap.isEmpty()) {
-            tours = tours.stream()
-                    .filter(t -> innerTypeMap.keySet().contains(t.getType()))
-                    .collect(Collectors.toSet());
-
-            GsonBuilder builder = new GsonBuilder();
-            Gson gson = builder.create();
-            request.setAttribute("json_filter", gson.toJson(innerTypeMap));
-        }
-
-        List<Tour> tourList = new ArrayList<>(tours);
-
-        Comparator<Tour> comp = TourComparator.getComparator(sort);
-        tourList.sort(comp);
 
         request.setAttribute("type_map", typeMap);
         request.setAttribute("tours_list", tourList);
 
-        sortMap.put(sort, true);
+        Map<Sort, Boolean> sortMap = fillMap(new HashMap<>(), Sort.values(), false);
+        sortMap.put(sortConst, true);
         request.setAttribute("sort_map", sortMap);
 
         request.getServletContext().getRequestDispatcher("/jsp/tours_list.jsp").forward(request, response);
@@ -137,15 +92,21 @@ public class TourController {
      */
     public void openTour(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String strId = request.getParameter("id");
-        long id = Long.valueOf(strId);
+        long id;
+        if (checkLongValue(strId)) {
+            id = Long.valueOf(strId);
+        } else {
+            response.sendRedirect("/");
+            return;
+        }
 
         Set<Meal> mealSet = new HashSet<>(Arrays.asList(Meal.values()));
         Set<Transport> transportSet = new HashSet<>(Arrays.asList(Transport.values()));
 
         Optional<Tour> tour = ToursBase.getById(id);
-        if (!tour.isPresent()){
+        if (!tour.isPresent()) {
             // TODO залогировать
-            request.getServletContext().getRequestDispatcher("/").forward(request, response);
+            response.sendRedirect("/");
             return;
         }
 
@@ -159,8 +120,11 @@ public class TourController {
 
     }
 
+
+
     /**
-     * Processes the purchase of a voucher with the selected user parameters
+     * Processes the purchase of a voucher with the selected user parameters.
+     * It is necessary to send only as a POST request. Parameters are not checked in the method.
      *
      * @param request
      * @param response
@@ -171,42 +135,85 @@ public class TourController {
         String strId = request.getParameter("id");
         String meal_opt = request.getParameter("meal_opt");
         String transport_opt = request.getParameter("transport_opt");
-        String durationStr = request.getParameter("duration");
-        int duration = Integer.valueOf(durationStr);
 
         Meal meal;
-        Transport transport;
-
-        if (meal_opt == null){
+        if (meal_opt == null) {
             // TODO залогировать
             request.getServletContext().getRequestDispatcher("/").forward(request, response);
             return;
-        }else {
+        } else {
             meal = Meal.valueOf(meal_opt);
         }
 
-        if (transport_opt == null){
+        Transport transport;
+        if (transport_opt == null) {
             // TODO залогировать
             request.getServletContext().getRequestDispatcher("/").forward(request, response);
             return;
-        }else {
+        } else {
             transport = Transport.valueOf(transport_opt);
         }
 
-        long id = Long.valueOf(strId);
+        long id;
+        if (checkLongValue(strId)) {
+            id = Long.valueOf(strId);
+        } else {
+            response.sendRedirect("/");
+            return;
+        }
         Optional<Tour> tour = ToursBase.getById(id);
-        if (!tour.isPresent()){
+        if (!tour.isPresent()) {
             // TODO залогировать
             request.getServletContext().getRequestDispatcher("/").forward(request, response);
             return;
         }
 
+        String durationStr = request.getParameter("duration");
+        int duration;
+        if (checkLongValue(durationStr)) {
+            duration = Integer.valueOf(durationStr);
+        }else {
+            // TODO залогировать
+            request.getServletContext().getRequestDispatcher("/").forward(request, response);
+            return;
+        }
         Voucher voucher = new Voucher(tour.get(), meal, transport, duration);
 
         request.setAttribute("voucher", voucher);
 
         request.getServletContext().getRequestDispatcher("/jsp/tour_buy_confirm.jsp").forward(request, response);
 
+    }
+
+    private boolean checkLongValue(String str) {
+        if (!str.matches("^[1-9]+$")){
+            return false;
+        }
+        try {
+            Long.valueOf(str);
+            return true;
+        }catch (Exception e){
+            return false;
+        }
+    }
+
+    private boolean checkIntValue(String str) {
+        if (!str.matches("^[1-9]+$")){
+            return false;
+        }
+        try {
+            Integer.valueOf(str);
+            return true;
+        }catch (Exception e){
+            return false;
+        }
+    }
+
+    private <K, V> Map<K, V> fillMap(Map<K, V> map, K[] keys, V defVal) {
+        for (int i = 0; i < keys.length; i++) {
+            map.put(keys[i], defVal);
+        }
+        return map;
     }
 
     /**
@@ -216,6 +223,22 @@ public class TourController {
         DATE,
         PLACE,
         TYPE,;
+        private static Map<String, Sort> keys;
+
+        static {
+            keys = new HashMap<>();
+            for (int i = 0; i < values().length; i++) {
+                keys.put(values()[i].toString(), values()[i]);
+            }
+        }
+
+        static public boolean hasValue(String key) {
+            return keys.keySet().contains(key);
+        }
+
+        static public boolean containAll(Collection<Sort> col) {
+            return keys.values().containsAll(col);
+        }
     }
 
 }
